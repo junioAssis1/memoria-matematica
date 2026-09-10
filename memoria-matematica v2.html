@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Memória Matemática</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --add: #3B82F6; --add-light: #DBEAFE; --add-dark: #1E3A8A;
+    --sub: #EF4444; --sub-light: #FEE2E2; --sub-dark: #7F1D1D;
+    --mul: #8B5CF6; --mul-light: #EDE9FE; --mul-dark: #3B0764;
+    --div: #10B981; --div-light: #D1FAE5; --div-dark: #064E3B;
+    --gold: #F59E0B; --sky: #E0F2FE;
+    --bg: #F0F9FF;
+    --card-front: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
+    --radius: 16px;
+  }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--bg);
+    min-height: 100vh;
+    padding: 1rem;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    text-align: center;
+    padding: 1.5rem 1rem 1rem;
+  }
+  .header h1 {
+    font-family: 'Fredoka One', cursive;
+    font-size: clamp(28px, 5vw, 44px);
+    color: #312E81;
+    letter-spacing: 1px;
+  }
+  .header p {
+    font-size: 14px;
+    color: #6B7280;
+    margin-top: 4px;
+  }
+
+  /* ── LEVEL SELECTOR ── */
+  .levels {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin: 1rem auto;
+    flex-wrap: wrap;
+    max-width: 600px;
+  }
+  .level-btn {
+    font-family: 'Fredoka One', cursive;
+    font-size: 14px;
+    padding: 8px 20px;
+    border-radius: 24px;
+    border: 2.5px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: white;
+    color: #6B7280;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  }
+  .level-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,0.12); }
+  .level-btn.active { color: white; border-color: transparent; }
+  .level-btn.easy.active  { background: #10B981; }
+  .level-btn.med.active   { background: #3B82F6; }
+  .level-btn.hard.active  { background: #8B5CF6; }
+  .level-btn.expert.active{ background: #EF4444; }
+
+  /* ── OP TOGGLES ── */
+  .op-row {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin: 0.5rem auto 1rem;
+    flex-wrap: wrap;
+    max-width: 600px;
+  }
+  .op-toggle {
+    font-family: 'Fredoka One', cursive;
+    font-size: 13px;
+    padding: 6px 16px;
+    border-radius: 20px;
+    border: 2.5px solid #E5E7EB;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: white;
+    color: #9CA3AF;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .op-toggle.on { color: white; border-color: transparent; }
+  .op-toggle.add.on { background: var(--add); }
+  .op-toggle.sub.on { background: var(--sub); }
+  .op-toggle.mul.on { background: var(--mul); }
+  .op-toggle.div.on { background: var(--div); }
+  .op-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; opacity: 0.6; }
+
+  /* ── STATS ── */
+  .stats {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin: 0 auto 1.2rem;
+    max-width: 500px;
+    flex-wrap: wrap;
+  }
+  .stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 8px 18px;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    min-width: 80px;
+  }
+  .stat-card .val {
+    font-family: 'Fredoka One', cursive;
+    font-size: 22px;
+    color: #312E81;
+  }
+  .stat-card .lbl {
+    font-size: 11px;
+    color: #9CA3AF;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* ── PROGRESS BAR ── */
+  .progress-wrap {
+    max-width: 480px;
+    margin: 0 auto 1.2rem;
+    padding: 0 1rem;
+  }
+  .progress-track {
+    background: #E5E7EB;
+    border-radius: 99px;
+    height: 8px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 99px;
+    background: linear-gradient(90deg, #6366F1, #8B5CF6);
+    transition: width 0.4s ease;
+    width: 0%;
+  }
+  .progress-label {
+    font-size: 11px;
+    color: #9CA3AF;
+    font-weight: 700;
+    text-align: right;
+    margin-top: 4px;
+  }
+
+  /* ── GRID ── */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    max-width: 500px;
+    margin: 0 auto;
+    padding: 0 0.5rem;
+  }
+  .grid.cols-6 { grid-template-columns: repeat(6, 1fr); max-width: 680px; }
+
+  /* ── CARD ── */
+  .card {
+    aspect-ratio: 1;
+    perspective: 700px;
+    cursor: pointer;
+  }
+  .card-inner {
+    width: 100%; height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.42s cubic-bezier(.4,0,.2,1);
+  }
+  .card.flipped .card-inner { transform: rotateY(180deg); }
+
+  .face {
+    position: absolute; inset: 0;
+    border-radius: var(--radius);
+    display: flex; align-items: center; justify-content: center;
+    backface-visibility: hidden;
+    font-family: 'Fredoka One', cursive;
+    border: 3px solid transparent;
+    transition: box-shadow 0.2s;
+  }
+  .card:hover:not(.matched) .face { box-shadow: 0 6px 18px rgba(99,102,241,0.25); }
+
+  .face-front {
+    background: var(--card-front);
+    color: rgba(255,255,255,0.7);
+    font-size: clamp(22px, 4vw, 30px);
+  }
+  .face-front .star-pattern {
+    position: absolute; inset: 0; border-radius: var(--radius);
+    background-image: radial-gradient(circle, rgba(255,255,255,0.12) 1px, transparent 1px);
+    background-size: 14px 14px;
+  }
+  .face-front .q { position: relative; z-index: 1; font-size: clamp(20px,3.5vw,28px); }
+
+  .face-back {
+    transform: rotateY(180deg);
+    font-size: clamp(10px,2.2vw,15px);
+    text-align: center;
+    padding: 6px;
+    line-height: 1.2;
+  }
+  /* operation-colored backs */
+  .face-back.add { background: var(--add-light); color: var(--add-dark); border-color: var(--add); }
+  .face-back.sub { background: var(--sub-light); color: var(--sub-dark); border-color: var(--sub); }
+  .face-back.mul { background: var(--mul-light); color: var(--mul-dark); border-color: var(--mul); }
+  .face-back.div { background: var(--div-light); color: var(--div-dark); border-color: var(--div); }
+  .face-back.result { background: #FEF9C3; color: #713F12; border-color: #FBBF24; font-size: clamp(16px,3vw,22px); }
+
+  .card.matched .face-back { opacity: 0.45; filter: grayscale(0.5); cursor: default; }
+  .card.wrong .card-inner { animation: shake 0.45s ease; }
+  @keyframes shake {
+    0%,100%{transform:rotateY(180deg)}
+    20%{transform:rotateY(180deg) translateX(-5px)}
+    40%{transform:rotateY(180deg) translateX(5px)}
+    60%{transform:rotateY(180deg) translateX(-4px)}
+    80%{transform:rotateY(180deg) translateX(4px)}
+  }
+
+  /* ── MESSAGE ── */
+  .msg-bar {
+    text-align: center;
+    min-height: 32px;
+    margin: 0.8rem 0;
+    font-family: 'Fredoka One', cursive;
+    font-size: 16px;
+    transition: opacity 0.3s;
+  }
+  .msg-bar.ok  { color: #059669; }
+  .msg-bar.err { color: #DC2626; }
+
+  /* ── BUTTONS ── */
+  .btn-row { display: flex; justify-content: center; gap: 10px; margin-top: 0.5rem; flex-wrap: wrap; }
+  .btn {
+    font-family: 'Fredoka One', cursive;
+    font-size: 15px;
+    padding: 10px 26px;
+    border-radius: 24px;
+    border: 2.5px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-primary { background: #6366F1; color: white; }
+  .btn-primary:hover { background: #4F46E5; transform: translateY(-1px); }
+  .btn-secondary { background: white; color: #6366F1; border-color: #C7D2FE; }
+  .btn-secondary:hover { background: #EEF2FF; }
+
+  /* ── WIN SCREEN ── */
+  .win-screen {
+    display: none;
+    text-align: center;
+    padding: 2rem 1rem;
+    animation: popIn 0.5s cubic-bezier(.34,1.56,.64,1);
+  }
+  .win-screen.show { display: block; }
+  @keyframes popIn { from { transform: scale(0.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .win-trophy { font-size: 64px; }
+  .win-title {
+    font-family: 'Fredoka One', cursive;
+    font-size: 30px;
+    color: #312E81;
+    margin: 0.5rem 0 0.25rem;
+  }
+  .win-stars { font-size: 32px; letter-spacing: 4px; }
+  .win-sub { font-size: 14px; color: #6B7280; margin: 0.5rem 0 1.5rem; }
+  .win-stats {
+    display: flex; justify-content: center; gap: 16px;
+    margin: 1rem 0 1.5rem; flex-wrap: wrap;
+  }
+  .win-stat {
+    background: white;
+    border-radius: 12px;
+    padding: 10px 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+  .win-stat .v { font-family:'Fredoka One',cursive; font-size:24px; color:#312E81; }
+  .win-stat .l { font-size:11px; color:#9CA3AF; font-weight:700; }
+
+  /* ── OP LEGEND ── */
+  .legend {
+    display: flex; justify-content: center; gap: 10px;
+    flex-wrap: wrap; margin: 0 auto 1rem; max-width: 500px;
+    font-size: 12px; font-weight: 700;
+  }
+  .leg-item { display: flex; align-items: center; gap: 5px; }
+  .leg-dot { width: 10px; height: 10px; border-radius: 3px; }
+
+  @media (max-width: 400px) {
+    .grid { grid-template-columns: repeat(4, 1fr); gap: 7px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🧮 Memória Matemática</h1>
+  <p>Combine a conta com o resultado certo!</p>
+</div>
+
+<!-- Difficulty -->
+<div class="levels">
+  <button class="level-btn easy active" onclick="setLevel('easy',this)">⭐ Fácil</button>
+  <button class="level-btn med"         onclick="setLevel('med',this)">⭐⭐ Médio</button>
+  <button class="level-btn hard"        onclick="setLevel('hard',this)">⭐⭐⭐ Difícil</button>
+  <button class="level-btn expert"      onclick="setLevel('expert',this)">🔥 Expert</button>
+</div>
+
+<!-- Operation toggles -->
+<div class="op-row">
+  <button class="op-toggle add on" id="tog-add" onclick="toggleOp('add')"><span class="op-dot"></span>Adição ➕</button>
+  <button class="op-toggle sub on" id="tog-sub" onclick="toggleOp('sub')"><span class="op-dot"></span>Subtração ➖</button>
+  <button class="op-toggle mul on" id="tog-mul" onclick="toggleOp('mul')"><span class="op-dot"></span>Multiplicação ✖️</button>
+  <button class="op-toggle div on" id="tog-div" onclick="toggleOp('div')"><span class="op-dot"></span>Divisão ➗</button>
+</div>
+
+<!-- Stats -->
+<div class="stats">
+  <div class="stat-card"><div class="val" id="s-pairs">0/0</div><div class="lbl">pares</div></div>
+  <div class="stat-card"><div class="val" id="s-moves">0</div><div class="lbl">tentativas</div></div>
+  <div class="stat-card"><div class="val" id="s-acertos">100%</div><div class="lbl">acertos</div></div>
+  <div class="stat-card"><div class="val" id="s-time">0:00</div><div class="lbl">tempo</div></div>
+</div>
+
+<!-- Progress -->
+<div class="progress-wrap">
+  <div class="progress-track"><div class="progress-fill" id="prog"></div></div>
+  <div class="progress-label" id="prog-lbl">0 de 0 pares</div>
+</div>
+
+<!-- Legend -->
+<div class="legend" id="legend"></div>
+
+<!-- Board -->
+<div class="grid" id="grid"></div>
+
+<!-- Message -->
+<div class="msg-bar" id="msg"></div>
+
+<!-- Win screen -->
+<div class="win-screen" id="win">
+  <div class="win-trophy">🏆</div>
+  <div class="win-title">Parabéns!</div>
+  <div class="win-stars" id="win-stars"></div>
+  <div class="win-stats">
+    <div class="win-stat"><div class="v" id="wv-time">-</div><div class="l">TEMPO</div></div>
+    <div class="win-stat"><div class="v" id="wv-moves">-</div><div class="l">TENTATIVAS</div></div>
+    <div class="win-stat"><div class="v" id="wv-acc">-</div><div class="l">PRECISÃO</div></div>
+  </div>
+  <div class="win-sub" id="win-sub"></div>
+</div>
+
+<div class="btn-row">
+  <button class="btn btn-primary" onclick="newGame()">🔀 Novo Jogo</button>
+  <button class="btn btn-secondary" onclick="resetStats()">↺ Reiniciar</button>
+</div>
+
+<script>
+// ── CONFIG ──────────────────────────────────────────────
+const LEVELS = {
+  easy:   { pairs: 6,  maxA: 5,  maxMul: 5,  cols: 4 },
+  med:    { pairs: 8,  maxA: 10, maxMul: 9,  cols: 4 },
+  hard:   { pairs: 10, maxA: 12, maxMul: 12, cols: 4 },
+  expert: { pairs: 12, maxA: 15, maxMul: 15, cols: 6 },
+};
+
+const OP_LABELS = {
+  add: { sym: '+',  name: 'Adição',       color: '#3B82F6' },
+  sub: { sym: '−',  name: 'Subtração',    color: '#EF4444' },
+  mul: { sym: '×',  name: 'Multiplicação',color: '#8B5CF6' },
+  div: { sym: '÷',  name: 'Divisão',      color: '#10B981' },
+};
+
+// ── STATE ────────────────────────────────────────────────
+let ops     = { add: true, sub: true, mul: true, div: true };
+let level   = 'easy';
+let pairs   = [], flipped = [], matched = 0, moves = 0;
+let lock    = false, started = false;
+let timer   = null, seconds = 0;
+
+// ── HELPERS ──────────────────────────────────────────────
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+function fmt(s) { const m = Math.floor(s/60), sec = s%60; return `${m}:${sec<10?'0':''}${sec}`; }
+function pct()  { return moves === 0 ? 100 : Math.round((matched / moves) * 100); }
+
+// ── GENERATE PAIRS ───────────────────────────────────────
+function genPairs() {
+  const { pairs: n, maxA, maxMul } = LEVELS[level];
+  const pool = [];
+
+  if (ops.add) {
+    for (let a = 1; a <= maxA; a++)
+      for (let b = 1; b <= maxA; b++)
+        pool.push({ expr: `${a} + ${b}`, res: a + b, op: 'add' });
+  }
+  if (ops.sub) {
+    for (let a = 2; a <= maxA; a++)
+      for (let b = 1; b < a; b++)
+        pool.push({ expr: `${a} − ${b}`, res: a - b, op: 'sub' });
+  }
+  if (ops.mul) {
+    for (let a = 2; a <= maxMul; a++)
+      for (let b = 2; b <= maxMul; b++)
+        pool.push({ expr: `${a} × ${b}`, res: a * b, op: 'mul' });
+  }
+  if (ops.div) {
+    for (let a = 2; a <= maxMul; a++)
+      for (let b = 2; b <= maxMul; b++)
+        pool.push({ expr: `${a * b} ÷ ${a}`, res: b, op: 'div' });
+  }
+
+  if (!pool.length) return [];
+
+  // Cada resultado aparece uma única vez na rodada. Isso evita que duas
+  // contas diferentes tenham, por exemplo, o resultado "5" e confundam a
+  // criança ao formar um par matematicamente correto.
+  shuffle(pool);
+  const selected = [];
+  const usedResults = new Set();
+
+  for (const candidate of pool) {
+    if (usedResults.has(candidate.res)) continue;
+    selected.push(candidate);
+    usedResults.add(candidate.res);
+    if (selected.length === n) break;
+  }
+
+  return selected;
+}
+
+// ── NEW GAME ─────────────────────────────────────────────
+function newGame() {
+  clearInterval(timer);
+  seconds = 0; matched = 0; moves = 0;
+  flipped = []; lock = false; started = false;
+
+  document.getElementById('win').className = 'win-screen';
+  document.getElementById('msg').textContent = '';
+  document.getElementById('msg').className = 'msg-bar';
+  updateStats();
+
+  pairs = genPairs();
+  if (!pairs.length) {
+    document.getElementById('grid').innerHTML =
+      '<p style="grid-column:1/-1;text-align:center;color:#9CA3AF;font-size:14px;padding:2rem">Selecione pelo menos uma operação!</p>';
+    return;
+  }
+
+  // build cards: expr + result for each pair
+  const cards = [];
+  pairs.forEach((p, i) => {
+    cards.push({ id: i*2,   pairId: i, type: 'expr',   label: p.expr, op: p.op });
+    cards.push({ id: i*2+1, pairId: i, type: 'result', label: String(p.res), op: p.op });
+  });
+  shuffle(cards);
+
+  const grid = document.getElementById('grid');
+  const cols = LEVELS[level].cols;
+  grid.className = 'grid' + (cols === 6 ? ' cols-6' : '');
+  grid.innerHTML = '';
+
+  cards.forEach(c => {
+    const div = document.createElement('div');
+    div.className = 'card';
+    div.dataset.id   = c.id;
+    div.dataset.pair = c.pairId;
+    div.dataset.type = c.type;
+    const backClass = c.type === 'result' ? 'result' : c.op;
+    div.innerHTML = `
+      <div class="card-inner">
+        <div class="face face-front">
+          <div class="star-pattern"></div>
+          <span class="q">?</span>
+        </div>
+        <div class="face face-back ${backClass}">${c.label}</div>
+      </div>`;
+    div.addEventListener('click', () => flip(div, c));
+    grid.appendChild(div);
+  });
+
+  buildLegend();
+  updateProgress();
+}
+
+// ── FLIP ─────────────────────────────────────────────────
+function flip(el, c) {
+  if (lock || el.classList.contains('flipped') || el.classList.contains('matched')) return;
+  if (!started) { started = true; startTimer(); }
+
+  el.classList.add('flipped');
+  flipped.push({ el, c });
+
+  if (flipped.length === 2) { lock = true; setTimeout(check, 200); }
+}
+
+// ── CHECK ─────────────────────────────────────────────────
+function check() {
+  moves++;
+  const [a, b] = flipped;
+  const isMatch = a.c.pairId === b.c.pairId && a.c.type !== b.c.type;
+
+  if (isMatch) {
+    a.el.classList.add('matched');
+    b.el.classList.add('matched');
+    matched++;
+    showMsg(`✅ Muito bem!  ${a.c.type === 'expr' ? a.c.label : b.c.label} = ${a.c.type === 'result' ? a.c.label : b.c.label}`, 'ok');
+    flipped = []; lock = false;
+    updateStats();
+    updateProgress();
+    if (matched === pairs.length) setTimeout(endGame, 500);
+  } else {
+    a.el.classList.add('wrong');
+    b.el.classList.add('wrong');
+    showMsg('❌ Tente de novo!', 'err');
+    setTimeout(() => {
+      a.el.classList.remove('flipped', 'wrong');
+      b.el.classList.remove('flipped', 'wrong');
+      flipped = []; lock = false;
+      updateStats();
+    }, 900);
+  }
+}
+
+// ── TIMER ─────────────────────────────────────────────────
+function startTimer() {
+  timer = setInterval(() => {
+    seconds++;
+    document.getElementById('s-time').textContent = fmt(seconds);
+  }, 1000);
+}
+
+// ── UI UPDATES ────────────────────────────────────────────
+function updateStats() {
+  document.getElementById('s-pairs').textContent   = `${matched}/${pairs.length || 0}`;
+  document.getElementById('s-moves').textContent   = moves;
+  document.getElementById('s-acertos').textContent = pct() + '%';
+}
+
+function updateProgress() {
+  const total = pairs.length || 1;
+  const pf = document.getElementById('prog');
+  pf.style.width = (matched / total * 100) + '%';
+  document.getElementById('prog-lbl').textContent = `${matched} de ${total} pares`;
+}
+
+function showMsg(txt, cls) {
+  const m = document.getElementById('msg');
+  m.textContent = txt;
+  m.className = 'msg-bar ' + cls;
+}
+
+function buildLegend() {
+  const leg = document.getElementById('legend');
+  leg.innerHTML = '';
+  ['add','sub','mul','div'].forEach(op => {
+    if (!ops[op]) return;
+    const o = OP_LABELS[op];
+    leg.innerHTML += `
+      <span class="leg-item">
+        <span class="leg-dot" style="background:${o.color}"></span>
+        <span style="color:#6B7280">${o.sym} ${o.name}</span>
+      </span>`;
+  });
+  leg.innerHTML += `
+    <span class="leg-item">
+      <span class="leg-dot" style="background:#FBBF24"></span>
+      <span style="color:#6B7280">= Resultado</span>
+    </span>`;
+}
+
+// ── END GAME ──────────────────────────────────────────────
+function endGame() {
+  clearInterval(timer);
+  const accuracy = pct();
+  const stars = moves <= pairs.length + 1 ? '⭐⭐⭐'
+              : moves <= pairs.length + 4 ? '⭐⭐'
+              : '⭐';
+  const msgs = {
+    '⭐⭐⭐': 'Incrível! Memória perfeita! 🧠',
+    '⭐⭐':   'Muito bom! Você está indo bem! 💪',
+    '⭐':     'Continue praticando, você vai melhorar! 🌱',
+  };
+
+  document.getElementById('win-stars').textContent = stars;
+  document.getElementById('wv-time').textContent   = fmt(seconds);
+  document.getElementById('wv-moves').textContent  = moves;
+  document.getElementById('wv-acc').textContent    = accuracy + '%';
+  document.getElementById('win-sub').textContent   = msgs[stars];
+  document.getElementById('win').className = 'win-screen show';
+}
+
+// ── CONTROLS ──────────────────────────────────────────────
+function setLevel(l, btn) {
+  level = l;
+  document.querySelectorAll('.level-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  newGame();
+}
+
+function toggleOp(op) {
+  const active = Object.values(ops).filter(Boolean).length;
+  if (ops[op] && active === 1) return; // keep at least 1
+  ops[op] = !ops[op];
+  const btn = document.getElementById('tog-' + op);
+  btn.classList.toggle('on', ops[op]);
+  newGame();
+}
+
+function resetStats() {
+  clearInterval(timer);
+  seconds = 0; matched = 0; moves = 0; flipped = []; lock = false; started = false;
+  document.getElementById('win').className = 'win-screen';
+  newGame();
+}
+
+// ── INIT ──────────────────────────────────────────────────
+newGame();
+</script>
+</body>
+</html>
